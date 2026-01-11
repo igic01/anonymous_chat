@@ -62,6 +62,3 @@ http://localhost:3000
 ## Notes
 - Room data and message history are stored in memory and reset when the server restarts.
 - The session secret is hardcoded in `server.js` and should be moved to an environment variable for production.
-
-## License
-ISC
