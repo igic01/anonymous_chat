@@ -5,21 +5,60 @@
     animation: fade-in 0.6s ease;
 }
 
+.room-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 18px;
+    padding: 0;
+}
+
 #messages {
     width: 100%;
-    min-height: 360px;
-    max-height: 520px;
+    height: 360px;
     padding: 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
     overflow-y: auto;
+    overflow-x: hidden;
     border: 1px solid var(--border);
     border-radius: 16px;
     background: rgba(15, 23, 42, 0.8);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(56, 189, 248, 0.5) rgba(15, 23, 42, 0.8);
 }
 
-#messages > .message {
+#messages::-webkit-scrollbar {
+    width: 10px;
+}
+
+#messages::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.8);
+    border-radius: 12px;
+}
+
+#messages::-webkit-scrollbar-thumb {
+    background: rgba(56, 189, 248, 0.5);
+    border-radius: 12px;
+    border: 2px solid rgba(15, 23, 42, 0.8);
+}
+
+#messages::-webkit-scrollbar-thumb:hover {
+    background: rgba(56, 189, 248, 0.8);
+}
+
+#messages>.message {
     display: flex;
     gap: 10px;
     align-items: flex-start;
@@ -30,14 +69,18 @@
     animation: pop 0.35s ease;
 }
 
-#messages > .message > .username {
+#messages>.message>.username {
     font-weight: 700;
     color: var(--accent);
     min-width: 90px;
 }
 
-#messages > .message > .message-content {
+#messages>.message>.message-content {
     color: var(--text);
+    white-space: pre-wrap;
+    /* overflow-wrap: anywhere; */
+    word-break: break-word;
+    word-wrap: break-word;
 }
 
 .message-input {
@@ -46,14 +89,14 @@
     gap: 12px;
 }
 
-.message-input > input[type=text] {
+.message-input>input[type=text] {
     width: 100%;
 }
 
-.message-input > input[type=button] {
+.message-input>input[type=button] {
     min-width: 120px;
 }
 
 #voice_call_button {
-    align-self: flex-start;
+    min-width: 0;
 }

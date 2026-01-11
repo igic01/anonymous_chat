@@ -37,7 +37,7 @@ body {
 }
 
 main {
-    width: minmax(100%, 200px);
+    width: 500px;
     margin: auto;
     background: linear-gradient(160deg, rgba(17, 24, 39, 0.98), rgba(15, 23, 42, 0.92));
     border: 1px solid var(--border);
