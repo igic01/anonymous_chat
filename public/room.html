@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room</title>
+    <link rel="stylesheet" href="/style/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <main>
+        <h1 id="room_name">Room Name</h1>
+        <p id="room_id">Room ID: <span id="room_id_value"></span></p>
+        <div id="room_content">
+            <h2>Welcome to the Room!</h2>
+            <div id="messages">
+                <!-- Chat messages will appear here -->
+            </div>
+            <div class="message-input">
+                <input type="text" id="message_input" placeholder="Write a message">
+                <input type="button" value="Send" id="send_button">
+            </div>
+            <button id="voice_call_button">Join Voice Call</button>
+            <audio id="remote_audio" autoplay></audio>
+        </div>
+    </main>
+
+
+    <script>
+        const socket = io(); // Initialize socket connection
+        const roomId = window.location.pathname.split('/').pop(); // Extract room ID from URL
+        const roomNameElement = document.getElementById('room_name');
+        const roomIdElement = document.getElementById('room_id_value');
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('message_input');
+        const sendButton = document.getElementById('send_button');
+        const voiceCallButton = document.getElementById('voice_call_button');
+        const remoteAudio = document.getElementById('remote_audio');
+
+        let localStream;
+        let peerConnection;
+        let isInCall = false;
+
+        const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }; // STUN server for NAT traversal
+
+        // Fetch room details and username
+        async function fetchRoomDetailsAndInitializeChat() {
+            try {
+                const response = await fetch(`/room/details/${roomId}`);
+                if (!response.ok) {
+                    throw new Error('Room not found');
+                }
+                const room = await response.json();
+
+                // Display room details
+                roomNameElement.textContent = room.name;
+                roomIdElement.textContent = room.id;
+
+                // Fetch username from session
+                const usernameResponse = await fetch('/get_username');
+                if (!usernameResponse.ok) {
+                    throw new Error('Failed to fetch username');
+                }
+                const { username } = await usernameResponse.json();
+
+                // Initialize chat
+                initializeChat(roomId, username);
+
+                // Initialize voice call
+                initializeVoiceCall(roomId, username);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to load room details. Redirecting to home.');
+                window.location.href = '/';
+            }
+        }
+
+        // Initialize chat functionalities
+        function initializeChat(roomId, username) {
+            // Join the room for chat
+            socket.emit('joinRoom', { username, roomId });
+
+            // Listen for previous messages
+            socket.on('messageHistory', (messages) => {
+                messages.forEach((message) => {
+                    addMessageToChat(message);
+                });
+            });
+
+            // Listen for new messages
+            socket.on('message', (data) => {
+                addMessageToChat(data);
+            });
+
+            // Send a message
+            sendButton.addEventListener('click', () => {
+                const messageContent = messageInput.value.trim();
+                if (messageContent) {
+                    socket.emit('sendMessage', { username, message: messageContent, roomId });
+                    messageInput.value = ''; // Clear the input field
+                }
+            });
+        }
+
+        // Add a message to the chat UI
+        function addMessageToChat(message) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.innerHTML = `
+                <span class="username">${message.username}:</span>
+                <span class="message-content">${message.message}</span>
+            `;
+            messagesContainer.appendChild(messageElement);
+        }
+
+        // Initialize voice call functionalities
+        function initializeVoiceCall(roomId, username) {
+            voiceCallButton.addEventListener('click', async () => {
+                if (isInCall) {
+                    leaveVoiceCall();
+                } else {
+                    await joinVoiceCall(roomId, username);
+                }
+            });
+        }
+
+        // Join the voice call
+        async function joinVoiceCall(roomId, username) {
+            try {
+                // Get user media (audio only)
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                peerConnection = new RTCPeerConnection(servers);
+
+                // Add local stream to peer connection
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+                // Handle remote stream
+                peerConnection.ontrack = (event) => {
+                    remoteAudio.srcObject = event.streams[0];
+                };
+
+                // Handle ICE candidates
+                peerConnection.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        socket.emit('iceCandidate', { candidate: event.candidate, roomId });
+                    }
+                };
+
+                // Create and send an offer
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                socket.emit('offer', { offer, roomId });
+
+                isInCall = true;
+                voiceCallButton.textContent = 'Leave Voice Call';
+                console.log(`${username} joined the voice call.`);
+            } catch (error) {
+                console.error('Error joining voice call:', error);
+            }
+        }
+
+        // Leave the voice call
+        function leaveVoiceCall() {
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+
+            isInCall = false;
+            voiceCallButton.textContent = 'Join Voice Call';
+            console.log('Left the voice call.');
+        }
+
+        // Handle WebRTC signaling
+        socket.on('offer', async ({ offer }) => {
+            try {
+                peerConnection = new RTCPeerConnection(servers);
+
+                // Add local stream to peer connection
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+                // Handle remote stream
+                peerConnection.ontrack = (event) => {
+                    remoteAudio.srcObject = event.streams[0];
+                };
+
+                // Handle ICE candidates
+                peerConnection.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        socket.emit('iceCandidate', { candidate: event.candidate, roomId });
+                    }
+                };
+
+                // Set remote offer and create answer
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                socket.emit('answer', { answer, roomId });
+            } catch (error) {
+                console.error('Error handling offer:', error);
+            }
+        });
+
+        socket.on('answer', async ({ answer }) => {
+            try {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+            } catch (error) {
+                console.error('Error setting remote description:', error);
+            }
+        });
+
+        socket.on('iceCandidate', async ({ candidate }) => {
+            try {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch (error) {
+                console.error('Error adding ICE candidate:', error);
+            }
+        });
+
+        // Start the process
+        fetchRoomDetailsAndInitializeChat();
+    </script>
+</body>
+
+</html>

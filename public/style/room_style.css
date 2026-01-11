@@ -1,0 +1,43 @@
+#messages {
+    border: 1px solid black;
+    width: 880px;
+    height: 500px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: scroll;
+}
+
+#messages>.message {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+#messages>.message>.username {
+    font-weight: bold;
+    overflow-x: hidden;
+    flex-basis: 15%;
+}
+
+#messages>.message>.message-content {
+    flex-basis: 85%;
+    text-align: justify;
+}
+
+.message-input {
+    margin-top: 4px;
+    display: flex;
+    width: 100%;
+    gap: 6px;
+}
+
+.message-input>input[type=text] {
+    width: 85%;
+}
+
+
+.message-input>input[type=button] {
+    width: 15%;
+}

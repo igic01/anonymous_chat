@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="/style/style.css">
+</head>
+
+<body>
+    <form action="/logout" method="POST">
+        <button type="submit">Log Out</button>
+    </form>
+    <main>
+        <h1 id="welcome_message">Hello User!</h1>
+        <p>Welcome to the Chat Application!</p>
+
+        <form action="/create_room" method="GET">
+            <button type="submit">Create Room</button>
+        </form>
+
+        <!-- Search for private rooms -->
+        <div class="search-input">
+            <input type="text" id="room_id_input" placeholder="Room id">
+            <input type="button" id="search_button" value="Search">
+        </div>
+
+        <div id="rooms">
+            <h2>My Rooms</h2>
+            <ul id="my_rooms">
+                <!-- List of user-created rooms -->
+            </ul>
+            <h2>Public Rooms</h2>
+            <ul id="public_rooms">
+                <!-- List of public rooms -->
+            </ul>
+        </div>
+    </main>
+
+    <script>
+        const myRooms = document.getElementById('my_rooms');
+        const publicRooms = document.getElementById('public_rooms');
+        const roomIdInput = document.getElementById('room_id_input');
+        const searchButton = document.getElementById('search_button');
+        const welcomeMessage = document.getElementById('welcome_message');
+
+        // Fetch and display username
+        async function fetchUsername() {
+            try {
+                const response = await fetch('/get_username');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch username');
+                }
+                const { username } = await response.json();
+                welcomeMessage.textContent = `Hello ${username}!`;
+            } catch (err) {
+                console.error('Error fetching username:', err);
+                alert('Failed to fetch user information. Redirecting to login.');
+                window.location.href = '/';
+            }
+        }
+
+        // Fetch and display public rooms
+        async function fetchPublicRooms() {
+            try {
+                const response = await fetch('/rooms/public');
+                const rooms = await response.json();
+                publicRooms.innerHTML = rooms.map(room => `<li><a href="/room/${room.id}">${room.name}</a></li>`).join('');
+            } catch (err) {
+                console.error('Error fetching public rooms:', err);
+            }
+        }
+
+        // Fetch and display user's created rooms
+        async function fetchUserRooms() {
+            try {
+                const response = await fetch('/rooms/user');
+                const rooms = await response.json();
+                myRooms.innerHTML = rooms
+                    .map(room => `
+                        <li>
+                            <a href="/room/${room.id}">${room.name}</a>
+                            <button onclick="deleteRoom('${room.id}')">Delete</button>
+                        </li>
+                    `)
+                    .join('');
+            } catch (err) {
+                console.error('Error fetching user rooms:', err);
+            }
+        }
+
+        // Search for a private room by ID
+        searchButton.addEventListener('click', () => {
+            const roomId = roomIdInput.value.trim();
+            if (roomId) {
+                window.location.href = `/room/${roomId}`;
+            } else {
+                alert('Please enter a valid Room ID.');
+            }
+        });
+
+        // Delete a room
+        async function deleteRoom(roomId) {
+            try {
+                const response = await fetch(`/rooms/delete/${roomId}`, {
+                    method: 'DELETE',
+                });
+
+                const result = await response.json();
+                alert(result.message || 'Room deleted successfully!');
+
+                // Refresh the user's created rooms
+                fetchUserRooms();
+            } catch (err) {
+                console.error('Error deleting room:', err);
+                alert('Failed to delete room.');
+            }
+        }
+
+        // Fetch username and rooms periodically
+        fetchUsername();
+        fetchPublicRooms();
+        fetchUserRooms();
+        setInterval(fetchPublicRooms, 5000);
+        setInterval(fetchUserRooms, 5000);
+    </script>
+</body>
+
+</html>

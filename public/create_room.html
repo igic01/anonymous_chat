@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Room</title>
+    <link rel="stylesheet" href="/style/style.css">
+</head>
+
+<body>
+    <main>
+        <h1>Create a room</h1>
+        <p id="response"></p>
+        <form>
+            <input type="text" name="room_name" id="room_name" required placeholder="Room's name">
+            <label for="Public">
+                <input type="checkbox" value="Public" name="room_type" id="room_type">
+                Public
+            </label>
+            <button type="submit">Create</button>
+        </form>
+    </main>
+
+    <script>
+        const form = document.querySelector('form');
+        const p_response = document.getElementById('response'); // Response element
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Prevent default form submission
+
+            // Gather form data
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('/create_room', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+
+                // Handle server response
+                const result = await response.json();
+
+                if (!response.ok) {
+                    p_response.innerHTML = result.message || 'Failed to create room.';
+                    p_response.style.color = 'red';
+                } else {
+                    p_response.innerHTML = result.message || 'Room created successfully!';
+                    p_response.style.color = 'green';
+                }
+            } catch (err) {
+                // Handle network or server errors
+                console.error('Error:', err.message);
+                p_response.innerHTML = 'An error occurred. Please try again later.';
+                p_response.style.color = 'red';
+            }
+        });
+    </script>
+</body>
+
+</html>

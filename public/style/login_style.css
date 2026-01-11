@@ -1,0 +1,18 @@
+h1>b {
+    display: block;
+    font-size: 60px;
+    line-height: 36px;
+    font-style: italic;
+}
+
+main>form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+main>form>input[type=text] {
+    margin-top: 10px;
+    width: 400px;
+    outline: 0;
+}

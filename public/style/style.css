@@ -1,0 +1,95 @@
+@import 'login_style.css';
+@import 'home_style.css';
+@import 'room_style.css';
+
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: Arial;
+    border: 0;
+}
+
+body {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+    gap: 8px;
+}
+
+input:hover {
+    opacity: 0.5;
+}
+
+input[type=text] {
+    border-bottom: 1px solid black;
+    outline: 0;
+}
+
+input[type=text]:hover {
+    border-bottom: 1px black dashed;
+}
+
+input[type=text]:focus {
+    border-bottom: 1px black dashed;
+}
+
+input[type=password] {
+    border-bottom: 1px solid black;
+    outline: 0;
+}
+
+input[type=password]:hover {
+    border-bottom: 1px black dashed;
+}
+
+input[type=password]:focus {
+    border-bottom: 1px black dashed;
+}
+
+input[type=button] {
+    padding: 4px;
+}
+
+button[type=submit] {
+    padding: 4px;
+}
+
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 10px;
+    height: 10px;
+    border: 1px solid white;
+    outline: 1.5px solid black;
+    border-radius: 16px;
+    cursor: pointer;
+    margin-left: 3px;
+}
+
+/* Style when checked */
+input[type="checkbox"]:checked {
+    background-color: black;
+}
+
+.search-input {
+    display: flex;
+    width: 100%;
+    gap: 6px;
+}
+
+.search-input>input[type=text] {
+    width: 65%;
+}
+
+
+.search-input>input[type=button] {
+    width: 35%;
+}
